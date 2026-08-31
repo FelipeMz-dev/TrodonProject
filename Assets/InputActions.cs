@@ -121,6 +121,16 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""initialStateCheck"": false,
                     ""priority"": 0
+                },
+                {
+                    ""name"": ""dash"",
+                    ""type"": ""Button"",
+                    ""id"": ""e75ac4a9-4030-4e36-86b5-f95e7e817241"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
                 }
             ],
             ""bindings"": [
@@ -149,11 +159,22 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""7d984cab-9510-4863-858c-81273a80fd3d"",
-                    ""path"": ""<Keyboard>/space"",
+                    ""path"": ""<Keyboard>/upArrow"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""399d7f21-6c4d-4dde-8f87-db174b9fc43b"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""dash"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -167,6 +188,7 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
         m_Player_moveLeft = m_Player.FindAction("moveLeft", throwIfNotFound: true);
         m_Player_moveRight = m_Player.FindAction("moveRight", throwIfNotFound: true);
         m_Player_jump = m_Player.FindAction("jump", throwIfNotFound: true);
+        m_Player_dash = m_Player.FindAction("dash", throwIfNotFound: true);
     }
 
     ~@ActionsController()
@@ -250,6 +272,7 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_moveLeft;
     private readonly InputAction m_Player_moveRight;
     private readonly InputAction m_Player_jump;
+    private readonly InputAction m_Player_dash;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -273,6 +296,10 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/jump".
         /// </summary>
         public InputAction @jump => m_Wrapper.m_Player_jump;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/dash".
+        /// </summary>
+        public InputAction @dash => m_Wrapper.m_Player_dash;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -308,6 +335,9 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
             @jump.started += instance.OnJump;
             @jump.performed += instance.OnJump;
             @jump.canceled += instance.OnJump;
+            @dash.started += instance.OnDash;
+            @dash.performed += instance.OnDash;
+            @dash.canceled += instance.OnDash;
         }
 
         /// <summary>
@@ -328,6 +358,9 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
             @jump.started -= instance.OnJump;
             @jump.performed -= instance.OnJump;
             @jump.canceled -= instance.OnJump;
+            @dash.started -= instance.OnDash;
+            @dash.performed -= instance.OnDash;
+            @dash.canceled -= instance.OnDash;
         }
 
         /// <summary>
@@ -389,5 +422,12 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnJump(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "dash" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnDash(InputAction.CallbackContext context);
     }
 }
