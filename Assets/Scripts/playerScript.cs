@@ -107,11 +107,11 @@ public class PlayerScript : MonoBehaviour
 
         if (dash && dashState == 0) dashState = dashDuration;   
         
-        if (dashState > 0)
+        if (isDashState())
         {
             Vector3 movement = transform.right * lastDirection * dashSpeed;
             characterController.Move(movement * Time.deltaTime);
-            pushPower = _pushPower * 6;
+            pushPower = _pushPower * 5;
             dashState -= Time.deltaTime;
         } else if (dashState < 0)
         {
@@ -136,10 +136,18 @@ public class PlayerScript : MonoBehaviour
             return;
         }
 
+        float verticalDirection = isDashState() ? 0.38f: 0f;
+
         // Calcular la dirección de empuje horizontal (plano XZ)
-        Vector3 pushDir = new Vector3(hit.moveDirection.x, 0f, hit.moveDirection.z - 15f);
+        Vector3 pushDir = new Vector3(hit.moveDirection.x, verticalDirection, hit.moveDirection.z);
 
         // Aplicar impulso al Rigidbody
-        body.linearVelocity = pushDir * pushPower;
+        //body.linearVelocity = pushDir * pushPower;
+        body.AddForce(pushDir * pushPower, ForceMode.Impulse);
+    }
+
+    public bool isDashState()
+    {
+        return dashState > 0;
     }
 }
