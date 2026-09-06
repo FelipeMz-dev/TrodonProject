@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class PlayerScript : MonoBehaviour
@@ -9,6 +10,9 @@ public class PlayerScript : MonoBehaviour
     private int lastDirection = 1;
     private float dashState = 0;
     private float _pushPower;
+    private float originalColliderHeight;
+    private bool isCrouching;
+    private Material currentMaterial;
 
     public float gravity = -9.81f;
     public float jumpHeight = 3f;
@@ -18,7 +22,10 @@ public class PlayerScript : MonoBehaviour
     public float cameraOffsetY = 4f;
     public float dashSpeed = 30;
     public float dashDuration = 0.5f;
+    public float crouchScale = 0.5f;
+    public float crouchSpeedMultiplier = 0.5f;
     public Transform cameraTransform;
+    public Material materialGreen;
 
     void Awake()
     {
@@ -41,28 +48,31 @@ public class PlayerScript : MonoBehaviour
     {
         fixedPlayerZ = transform.position.z;
         _pushPower = pushPower;
+        originalColliderHeight = characterController.height;
+        currentMaterial = GetComponent<MeshRenderer>().material;
     }
 
     // Update is called once per frame
     void Update()
     {
-        handleJumping();
-
-        handleDash();
+        HandleJumping();
+        HandleDash();
+        HandleCrouch();
 
         if (dashState == 0)
         {
-            Vector3 movement = transform.right * GetMovementInput().x * speed + transform.up * verticalVelocity;
+            float currentSpeed = speed * crouchSpeedMultiplier;
+            Vector3 movement = transform.right * GetMovementInput().x * currentSpeed + transform.up * verticalVelocity;
             characterController.Move(movement * Time.deltaTime);
         }
 
         Vector3 currentPosition = characterController.transform.position;
         characterController.transform.position = new Vector3(currentPosition.x, currentPosition.y, fixedPlayerZ);
 
-        fixCameraPosition();
+        FixCameraPosition();
     }
 
-    private void fixCameraPosition()
+    private void FixCameraPosition()
     {
         if (cameraTransform != null)
         {
@@ -85,7 +95,7 @@ public class PlayerScript : MonoBehaviour
         return new Vector3(direction, 0f, 0f);
     }
 
-    private void handleJumping()
+    private void HandleJumping()
     {
         bool isGrounded = characterController.isGrounded;
         bool jump = actionsController.Player.jump.WasPressedThisFrame();
@@ -93,6 +103,9 @@ public class PlayerScript : MonoBehaviour
         if (isGrounded && jump)
         {
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        } else
+        {
+            verticalVelocity = verticalVelocity > 0 && isCrouching ? 0 : verticalVelocity;
         }
 
         if (!isGrounded || verticalVelocity > 0f)
@@ -101,13 +114,13 @@ public class PlayerScript : MonoBehaviour
         }
     }
 
-    private void handleDash()
+    private void HandleDash()
     {
         bool dash = actionsController.Player.dash.WasPressedThisFrame();
 
         if (dash && dashState == 0) dashState = dashDuration;   
         
-        if (isDashState())
+        if (IsDashState())
         {
             Vector3 movement = transform.right * lastDirection * dashSpeed;
             characterController.Move(movement * Time.deltaTime);
@@ -118,6 +131,44 @@ public class PlayerScript : MonoBehaviour
             dashState = 0;
             pushPower = _pushPower;
         }
+    }
+
+    private void HandleCrouch()
+    {
+        bool crouch = actionsController.Player.crouch.IsPressed();
+
+        // No permitir levantarse mientras haya un objeto bloqueando el espacio superior.
+        if (!crouch && isCrouching && !CanStand())
+        {
+            crouch = true;
+        }
+
+        isCrouching = crouch;
+        characterController.height = crouch ? originalColliderHeight * crouchScale : originalColliderHeight;
+    }
+
+    private bool CanStand()
+    {
+        float crouchedHeight = characterController.height * crouchScale;
+        Vector3 topPlayer = characterController.transform.position + Vector3.up * crouchedHeight;
+        Vector3 boxHalfExtents = new Vector3(characterController.radius, (originalColliderHeight - crouchedHeight) / 2f, characterController.radius);
+
+        Collider[] colliders = Physics.OverlapBox(
+            topPlayer,
+            boxHalfExtents,
+            transform.rotation,
+            Physics.AllLayers,
+            QueryTriggerInteraction.Ignore);
+
+        foreach (Collider collider in colliders)
+        {
+            if (collider != characterController && !collider.transform.IsChildOf(transform))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
@@ -136,7 +187,7 @@ public class PlayerScript : MonoBehaviour
             return;
         }
 
-        float verticalDirection = isDashState() ? 0.38f: 0f;
+        float verticalDirection = IsDashState() ? 0.38f: 0f;
 
         // Calcular la dirección de empuje horizontal (plano XZ)
         Vector3 pushDir = new Vector3(hit.moveDirection.x, verticalDirection, hit.moveDirection.z);
@@ -146,7 +197,7 @@ public class PlayerScript : MonoBehaviour
         body.AddForce(pushDir * pushPower, ForceMode.Impulse);
     }
 
-    public bool isDashState()
+    public bool IsDashState()
     {
         return dashState > 0;
     }

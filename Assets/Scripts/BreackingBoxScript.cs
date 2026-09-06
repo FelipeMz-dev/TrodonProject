@@ -19,7 +19,7 @@ public class BreackingBoxScript : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             PlayerScript player = other.GetComponent<PlayerScript>();
-            if (player.isDashState())
+            if (player.IsDashState())
             {
                 Destroy(gameObject);
             }

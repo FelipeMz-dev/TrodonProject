@@ -131,6 +131,16 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""initialStateCheck"": false,
                     ""priority"": 0
+                },
+                {
+                    ""name"": ""crouch"",
+                    ""type"": ""Button"",
+                    ""id"": ""cd6126d7-8574-4e2b-be25-33db7c335ebf"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
                 }
             ],
             ""bindings"": [
@@ -138,6 +148,17 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
                     ""name"": """",
                     ""id"": ""045cc94c-bb8e-472a-a9b7-01b08cc45482"",
                     ""path"": ""<Keyboard>/leftArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""moveLeft"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f9e91da6-72d4-4dd5-868d-22784bd6fa57"",
+                    ""path"": ""<Keyboard>/a"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -158,8 +179,30 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
+                    ""id"": ""8c87b2a8-5b92-471b-88ee-24c1f06981e9"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""moveRight"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""7d984cab-9510-4863-858c-81273a80fd3d"",
                     ""path"": ""<Keyboard>/upArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""193393e9-bad5-4844-9708-a5187205fed3"",
+                    ""path"": ""<Keyboard>/w"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -177,6 +220,28 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
                     ""action"": ""dash"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""983f4fae-7929-4e24-8a0a-bb278a476862"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""crouch"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2b292ba4-dcf9-4938-beb7-9cd4e0faae5d"",
+                    ""path"": ""<Keyboard>/downArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""crouch"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -189,6 +254,7 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
         m_Player_moveRight = m_Player.FindAction("moveRight", throwIfNotFound: true);
         m_Player_jump = m_Player.FindAction("jump", throwIfNotFound: true);
         m_Player_dash = m_Player.FindAction("dash", throwIfNotFound: true);
+        m_Player_crouch = m_Player.FindAction("crouch", throwIfNotFound: true);
     }
 
     ~@ActionsController()
@@ -273,6 +339,7 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_moveRight;
     private readonly InputAction m_Player_jump;
     private readonly InputAction m_Player_dash;
+    private readonly InputAction m_Player_crouch;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -300,6 +367,10 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/dash".
         /// </summary>
         public InputAction @dash => m_Wrapper.m_Player_dash;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/crouch".
+        /// </summary>
+        public InputAction @crouch => m_Wrapper.m_Player_crouch;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -338,6 +409,9 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
             @dash.started += instance.OnDash;
             @dash.performed += instance.OnDash;
             @dash.canceled += instance.OnDash;
+            @crouch.started += instance.OnCrouch;
+            @crouch.performed += instance.OnCrouch;
+            @crouch.canceled += instance.OnCrouch;
         }
 
         /// <summary>
@@ -361,6 +435,9 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
             @dash.started -= instance.OnDash;
             @dash.performed -= instance.OnDash;
             @dash.canceled -= instance.OnDash;
+            @crouch.started -= instance.OnCrouch;
+            @crouch.performed -= instance.OnCrouch;
+            @crouch.canceled -= instance.OnCrouch;
         }
 
         /// <summary>
@@ -429,5 +506,12 @@ public partial class @ActionsController: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnDash(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "crouch" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCrouch(InputAction.CallbackContext context);
     }
 }
