@@ -12,7 +12,8 @@ public class PlayerScript : MonoBehaviour
     private float _pushPower;
     private float originalColliderHeight;
     private bool isCrouching;
-    private Material currentMaterial;
+    private bool IsPlayState = false;
+    PlayerStats stats;
 
     public float gravity = -9.81f;
     public float jumpHeight = 3f;
@@ -25,22 +26,29 @@ public class PlayerScript : MonoBehaviour
     public float crouchScale = 0.5f;
     public float crouchSpeedMultiplier = 0.5f;
     public Transform cameraTransform;
+    public Transform gun;
+    public GameObject projectilePrefab;
+    public float projectileSpeed = 30f;
+    public float projectileOffset = 0.5f;
     public Material materialGreen;
 
     void Awake()
     {
         actionsController = new ActionsController();
         characterController = GetComponent<CharacterController>();
+        stats = GetComponent<PlayerStats>();
     }
 
     void OnEnable()
     {
         actionsController.Player.Enable();
+        actionsController.Gun.Enable();
     }
 
     void OnDisable()
     {
         actionsController.Player.Disable();
+        actionsController.Gun.Disable();
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -49,19 +57,22 @@ public class PlayerScript : MonoBehaviour
         fixedPlayerZ = transform.position.z;
         _pushPower = pushPower;
         originalColliderHeight = characterController.height;
-        currentMaterial = GetComponent<MeshRenderer>().material;
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (!IsPlayState) return;
+
         HandleJumping();
         HandleDash();
         HandleCrouch();
+        MoveGunAngle();
+        ShootGunAngle();
 
         if (dashState == 0)
         {
-            float currentSpeed = speed * crouchSpeedMultiplier;
+            float currentSpeed = isCrouching? speed * crouchSpeedMultiplier : speed;
             Vector3 movement = transform.right * GetMovementInput().x * currentSpeed + transform.up * verticalVelocity;
             characterController.Move(movement * Time.deltaTime);
         }
@@ -70,6 +81,48 @@ public class PlayerScript : MonoBehaviour
         characterController.transform.position = new Vector3(currentPosition.x, currentPosition.y, fixedPlayerZ);
 
         FixCameraPosition();
+    }
+
+    private void MoveGunAngle()
+    {
+        if (gun == null || Camera.main == null)
+        {
+            return;
+        }
+
+        Vector2 cursorPosition = actionsController.Gun.direction.ReadValue<Vector2>();
+        float distanceToGun = Mathf.Abs(Camera.main.transform.position.z - gun.position.z);
+        Vector3 cursorWorldPosition = Camera.main.ScreenToWorldPoint(
+            new Vector3(cursorPosition.x, cursorPosition.y, distanceToGun)
+        );
+        Vector2 direction = (Vector2)cursorWorldPosition - (Vector2)gun.position;
+
+        if (direction.sqrMagnitude <= Mathf.Epsilon)
+        {
+            return;
+        }
+
+        float directionAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        gun.rotation = Quaternion.Euler(0f, 0f, directionAngle);
+    }
+
+    private void ShootGunAngle()
+    {
+        if (!actionsController.Gun.shoot.WasPressedThisFrame() || gun == null || projectilePrefab == null)
+        {
+            return;
+        }
+
+        Vector3 direction = gun.right;
+        Vector3 spawnPosition = gun.position + direction * projectileOffset;
+        GameObject projectileObject = Instantiate(projectilePrefab, spawnPosition, gun.rotation);
+        ProjectileScript projectile = projectileObject.GetComponent<ProjectileScript>();
+
+        if (projectile != null)
+        {
+            stats.shot();
+            projectile.Launch(direction, projectileSpeed, gameObject);
+        }
     }
 
     private void FixCameraPosition()
@@ -118,13 +171,17 @@ public class PlayerScript : MonoBehaviour
     {
         bool dash = actionsController.Player.dash.WasPressedThisFrame();
 
-        if (dash && dashState == 0) dashState = dashDuration;   
+        if (dash && dashState == 0)
+        {
+            dashState = dashDuration;
+            stats.dash();
+        } 
         
         if (IsDashState())
         {
             Vector3 movement = transform.right * lastDirection * dashSpeed;
             characterController.Move(movement * Time.deltaTime);
-            pushPower = _pushPower * 5;
+            pushPower = _pushPower * 10;
             dashState -= Time.deltaTime;
         } else if (dashState < 0)
         {
@@ -181,13 +238,7 @@ public class PlayerScript : MonoBehaviour
             return;
         }
 
-        // Evitar empujar objetos si estamos cayendo sobre ellos
-        if (hit.moveDirection.y < -0.3f)
-        {
-            return;
-        }
-
-        float verticalDirection = IsDashState() ? 0.38f: 0f;
+        float verticalDirection = IsDashState() ? 0.4f: 0f;
 
         // Calcular la dirección de empuje horizontal (plano XZ)
         Vector3 pushDir = new Vector3(hit.moveDirection.x, verticalDirection, hit.moveDirection.z);
@@ -200,5 +251,15 @@ public class PlayerScript : MonoBehaviour
     public bool IsDashState()
     {
         return dashState > 0;
+    }
+
+    public void TogglePlayState(bool state)
+    {
+        IsPlayState = state;
+    }
+
+    public bool IsPlayerPlayState()
+    {
+        return IsPlayState;
     }
 }

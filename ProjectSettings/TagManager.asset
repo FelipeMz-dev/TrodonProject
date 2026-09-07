@@ -5,6 +5,10 @@ TagManager:
   serializedVersion: 3
   tags:
   - Activator
+  - Wall
+  - Projectile
+  - DeathZone
+  - Enemy
   layers:
   - Default
   - TransparentFX

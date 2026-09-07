@@ -158,6 +158,56 @@
                     "isPartOfComposite": false
                 }
             ]
+        },
+        {
+            "name": "Gun",
+            "id": "6e77fad7-c736-4d04-b34a-0c4361ae8aea",
+            "actions": [
+                {
+                    "name": "direction",
+                    "type": "Value",
+                    "id": "0eec78b5-239b-4abc-8c89-86d27361511b",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true,
+                    "priority": 0
+                },
+                {
+                    "name": "shoot",
+                    "type": "Button",
+                    "id": "6ed429ae-b921-4c27-8a8d-9a242c8205de",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "7db479a6-f883-416c-9ef1-fc69614d512a",
+                    "path": "<Mouse>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "direction",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "57565f54-16a4-4974-8b45-20890aec06ea",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "shoot",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": []

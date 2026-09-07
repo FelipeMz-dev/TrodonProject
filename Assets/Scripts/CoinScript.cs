@@ -5,12 +5,6 @@ public class CoinScript : MonoBehaviour
 
     public float rotationSpeed = 3f;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
     // Update is called once per frame
     void Update()
     {
@@ -21,6 +15,8 @@ public class CoinScript : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            PlayerStats player = other.GetComponent<PlayerStats>();
+            player.AddScore(1);
             Destroy(gameObject);
         }
     }
