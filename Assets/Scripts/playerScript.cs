@@ -5,6 +5,7 @@ public class PlayerScript : MonoBehaviour
 {
     private ActionsController actionsController;
     private CharacterController characterController;
+    private Animator animator;
     private float verticalVelocity;
     private float fixedPlayerZ;
     private int lastDirection = 1;
@@ -31,6 +32,7 @@ public class PlayerScript : MonoBehaviour
     public float projectileSpeed = 30f;
     public float projectileOffset = 0.5f;
     public Material materialGreen;
+    public Transform mesh;
 
     void Awake()
     {
@@ -57,6 +59,7 @@ public class PlayerScript : MonoBehaviour
         fixedPlayerZ = transform.position.z;
         _pushPower = pushPower;
         originalColliderHeight = characterController.height;
+        animator = GetComponentInChildren<Animator>();
     }
 
     // Update is called once per frame
@@ -73,7 +76,7 @@ public class PlayerScript : MonoBehaviour
         if (dashState == 0)
         {
             float currentSpeed = isCrouching? speed * crouchSpeedMultiplier : speed;
-            Vector3 movement = transform.right * GetMovementInput().x * currentSpeed + transform.up * verticalVelocity;
+            Vector3 movement = Vector3.right * GetMovementInput().x * currentSpeed + Vector3.up * verticalVelocity;
             characterController.Move(movement * Time.deltaTime);
         }
 
@@ -145,6 +148,13 @@ public class PlayerScript : MonoBehaviour
         bool moveRight = actionsController.Player.moveRight.IsPressed();
         int direction = (moveLeft ? -1 : 0) + (moveRight ? 1 : 0);
         lastDirection = moveLeft ? -1 : moveRight ? 1 : lastDirection;
+        float meshDirection =  direction == 0 ? mesh.eulerAngles.y : (direction == 1 ? 0f : 180f);
+        mesh.eulerAngles = new Vector3(mesh.eulerAngles.x, meshDirection, mesh.eulerAngles.z);
+        bool isWalking = moveLeft || moveRight;
+        if (animator != null)
+        {
+            animator.SetBool("isWalking", isWalking);
+        }
         return new Vector3(direction, 0f, 0f);
     }
 
@@ -179,7 +189,7 @@ public class PlayerScript : MonoBehaviour
         
         if (IsDashState())
         {
-            Vector3 movement = transform.right * lastDirection * dashSpeed;
+            Vector3 movement = Vector3.right * lastDirection * dashSpeed;
             characterController.Move(movement * Time.deltaTime);
             pushPower = _pushPower * 10;
             dashState -= Time.deltaTime;
