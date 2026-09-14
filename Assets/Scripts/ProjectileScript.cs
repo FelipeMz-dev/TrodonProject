@@ -41,13 +41,22 @@ public class ProjectileScript : MonoBehaviour
             {
                 Physics.IgnoreCollision(projectileCollider, ownerCollider);
             }
+            
         }
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        PlayerStats stats = owner.GetComponent<PlayerStats>();
-        stats.projectilHit();
-        Destroy(gameObject);
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            EnemyScript enemy = collision.gameObject.GetComponent<EnemyScript>();
+            PlayerStats stats = owner.GetComponent<PlayerStats>();
+            stats.projectilHit();
+            Destroy(gameObject);
+            if (enemy != null)
+            {
+                enemy.TakeDamage(1);
+            }
+        }
     }
 }
