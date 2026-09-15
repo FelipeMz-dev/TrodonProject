@@ -1,0 +1,4 @@
+*.cs text diff=csharp
+*.shader text
+*.hlsl text linguist-language=hlsl
+*.compute text linguist-language=hlsl
