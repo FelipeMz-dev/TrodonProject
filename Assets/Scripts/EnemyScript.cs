@@ -25,18 +25,12 @@ public class EnemyScript : MonoBehaviour
         transform.position += new Vector3(speed * Time.deltaTime, 0, 0);
     }
 
-    void OnTriggerEnter(Collider other)
+    public void TakeDamage(float amount)
     {
-        if (other.CompareTag("Player"))
+        health -= amount;
+        if (health <= 0)
         {
-            PlayerStats player = other.GetComponent<PlayerStats>();
-            player.TakeDamage(20);
-        }
-        if (other.CompareTag("Projectile"))
-        {
-            health -= 1;
-            if (health == 0) Destroy(gameObject);
-            Destroy(other.gameObject);
+            Destroy(gameObject);
         }
     }
 }

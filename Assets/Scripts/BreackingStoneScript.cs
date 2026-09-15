@@ -14,8 +14,11 @@ public class BreackingStoneScript : MonoBehaviour
     {
         if (other.CompareTag("Projectile") || other.CompareTag("DeathZone"))
         {
+            //stop movement
+            Rigidbody rigidbody = GetComponent<Rigidbody>();
+            rigidbody.linearVelocity = Vector3.zero;
+            rigidbody.angularVelocity = Vector3.zero;
             transform.position = initialPosition;
-
         }
     }
 }

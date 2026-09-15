@@ -26,7 +26,7 @@ public class PlayerScript : MonoBehaviour
     public float dashDuration = 0.5f;
     public float crouchScale = 0.5f;
     public float crouchSpeedMultiplier = 0.5f;
-    public Transform cameraTransform;
+    public float rotationSpeed = 12f;
     public Transform gun;
     public GameObject projectilePrefab;
     public float projectileSpeed = 30f;
@@ -82,8 +82,6 @@ public class PlayerScript : MonoBehaviour
 
         Vector3 currentPosition = characterController.transform.position;
         characterController.transform.position = new Vector3(currentPosition.x, currentPosition.y, fixedPlayerZ);
-
-        FixCameraPosition();
     }
 
     private void MoveGunAngle()
@@ -128,28 +126,21 @@ public class PlayerScript : MonoBehaviour
         }
     }
 
-    private void FixCameraPosition()
-    {
-        if (cameraTransform != null)
-        {
-            Vector3 cameraPosition = cameraTransform.position;
-            Vector3 playerPosition = characterController.transform.position;
-            float distanceHorizontal = Mathf.Abs(playerPosition.x - cameraPosition.x) - marginHorizontal;
-            float newX = playerPosition.x < cameraPosition.x - marginHorizontal ? cameraPosition.x - distanceHorizontal : playerPosition.x > cameraPosition.x + marginHorizontal ? cameraPosition.x + distanceHorizontal : cameraPosition.x;
-            newX = Mathf.Clamp(newX, 0, cameraPosition.x + marginHorizontal);
-            Vector3 newPosition = new Vector3(newX, playerPosition.y + cameraOffsetY, cameraTransform.transform.position.z);
-            cameraTransform.position = newPosition;
-        }
-    }
-
     private Vector3 GetMovementInput()
     {
         bool moveLeft = actionsController.Player.moveLeft.IsPressed();
         bool moveRight = actionsController.Player.moveRight.IsPressed();
         int direction = (moveLeft ? -1 : 0) + (moveRight ? 1 : 0);
         lastDirection = moveLeft ? -1 : moveRight ? 1 : lastDirection;
-        float meshDirection =  direction == 0 ? mesh.eulerAngles.y : (direction == 1 ? 0f : 180f);
-        mesh.eulerAngles = new Vector3(mesh.eulerAngles.x, meshDirection, mesh.eulerAngles.z);
+
+        float targetY = direction == 0 ? (lastDirection == 1 ? 360f : 180f) : (direction == 1 ? 360f : 180f);
+
+        if (mesh != null)
+        {
+            Quaternion targetRotation = Quaternion.Euler(mesh.eulerAngles.x, targetY, mesh.eulerAngles.z);
+            mesh.rotation = Quaternion.RotateTowards(mesh.rotation, targetRotation, rotationSpeed * 100f * Time.deltaTime);
+        }
+
         bool isWalking = moveLeft || moveRight;
         if (animator != null)
         {

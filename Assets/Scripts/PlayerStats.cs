@@ -50,6 +50,6 @@ public class PlayerStats : MonoBehaviour
 
     public void projectilHit()
     {
-        
+        hudManager.soundProjectilHit();
     }
 }
