@@ -182,7 +182,7 @@ public class PlayerScript : MonoBehaviour
         {
             Vector3 movement = Vector3.right * lastDirection * dashSpeed;
             characterController.Move(movement * Time.deltaTime);
-            pushPower = _pushPower * 10;
+            pushPower = _pushPower * 9;
             dashState -= Time.deltaTime;
         } else if (dashState < 0)
         {
