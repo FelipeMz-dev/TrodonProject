@@ -47,16 +47,21 @@ public class ProjectileScript : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Enemy"))
+        EnemyScript enemy = collision.gameObject.GetComponentInParent<EnemyScript>();
+        PlayerStats targetStats = collision.gameObject.GetComponentInParent<PlayerStats>();
+        PlayerStats shooterStats = owner == null ? null : owner.GetComponent<PlayerStats>();
+        EnemyScript shooterEnemy = owner == null ? null : owner.GetComponent<EnemyScript>();
+
+        if (enemy != null && shooterStats != null)
         {
-            EnemyScript enemy = collision.gameObject.GetComponent<EnemyScript>();
-            PlayerStats stats = owner.GetComponent<PlayerStats>();
-            stats.projectilHit();
+            shooterStats.projectilHit();
             Destroy(gameObject);
-            if (enemy != null)
-            {
-                enemy.TakeDamage(1);
-            }
+            enemy.TakeDamage(1);
+        }
+        else if (targetStats != null && shooterEnemy != null)
+        {
+            targetStats.TakeDamage(1);
+            Destroy(gameObject);
         }
     }
 }
