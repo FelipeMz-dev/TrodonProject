@@ -47,13 +47,13 @@ public class HUDManager : MonoBehaviour
     {
         if (restartState)
         {
-             RestartGame();
-             audioSource.PlayOneShot(audioRestart);
+            RestartGame();
+            audioSource.PlayOneShot(audioRestart);
         }
         else
         {
-             PlayGame();
-             audioSource.PlayOneShot(audioBeep);
+            PlayGame();
+            audioSource.PlayOneShot(audioBeep);
         }
     }
 

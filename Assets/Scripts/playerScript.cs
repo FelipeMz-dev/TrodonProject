@@ -26,6 +26,11 @@ public class PlayerScript : MonoBehaviour
     public float dashDuration = 0.5f;
     public float crouchScale = 0.5f;
     public float crouchSpeedMultiplier = 0.5f;
+    
+    // --- NUEVA VARIABLE GLOBAL ---
+    [Tooltip("El centro físico en Y que tendrá el Character Controller permanentemente")]
+    public float crouchCenterY = 0.2f;
+
     public float rotationSpeed = 12f;
     public Transform gun;
     public GameObject projectilePrefab;
@@ -34,6 +39,11 @@ public class PlayerScript : MonoBehaviour
     public Material materialGreen;
     public Transform mesh;
 
+    [Header("Idle AFK Settings")]
+    [Tooltip("Tiempo en segundos antes de que el personaje haga la animación de espera")]
+    public float timeToWaitAFK = 5f;
+    private float afkTimer = 0f;
+    
     void Awake()
     {
         actionsController = new ActionsController();
@@ -73,11 +83,36 @@ public class PlayerScript : MonoBehaviour
         MoveGunAngle();
         ShootGunAngle();
 
+        // Obtener la dirección actual del movimiento
+        Vector3 inputMovement = GetMovementInput();
+
         if (dashState == 0)
         {
             float currentSpeed = isCrouching? speed * crouchSpeedMultiplier : speed;
             Vector3 movement = Vector3.right * GetMovementInput().x * currentSpeed + Vector3.up * verticalVelocity;
             characterController.Move(movement * Time.deltaTime);
+        }
+
+        // --- NUEVA LÓGICA: CONTADOR DE ESPERA (AFK) ---
+        // Verificamos si el personaje está completamente quieto en el suelo y sin agacharse
+        bool isQuiet = inputMovement.x == 0 && characterController.isGrounded && !isCrouching && dashState == 0;
+
+        if (isQuiet)
+        {
+            afkTimer += Time.deltaTime; // Sumamos tiempo si está quieto
+
+            if (afkTimer >= timeToWaitAFK)
+            {
+                if (animator != null)
+                {
+                    animator.SetTrigger("playAFK"); // Activamos la animación especial
+                }
+                afkTimer = 0f; // Reiniciamos el contador para que pueda repetirse después
+            }
+        }
+        else
+        {
+            afkTimer = 0f; // Si se mueve, salta, se agacha o hace dash, el contador vuelve a cero de inmediato
         }
 
         Vector3 currentPosition = characterController.transform.position;
@@ -141,11 +176,18 @@ public class PlayerScript : MonoBehaviour
             mesh.rotation = Quaternion.RotateTowards(mesh.rotation, targetRotation, rotationSpeed * 100f * Time.deltaTime);
         }
 
-        bool isWalking = moveLeft || moveRight;
+        // --- ACTUALIZACIÓN DE BLEND TREE ---
         if (animator != null)
         {
-            animator.SetBool("isWalking", isWalking);
+            // Si el jugador pulsa teclas, el valor objetivo es 1, si no, es 0
+            float targetSpeedValue = (moveLeft || moveRight) ? 1f : 0f;
+            float currentAnimSpeed = animator.GetFloat("speed");
+
+            // Suaviza la transición matemática entre Idle (0) y Caminar (1)
+            float smoothedSpeed = Mathf.MoveTowards(currentAnimSpeed, targetSpeedValue, Time.deltaTime * 5f);
+            animator.SetFloat("speed", smoothedSpeed);
         }
+
         return new Vector3(direction, 0f, 0f);
     }
 
@@ -157,6 +199,12 @@ public class PlayerScript : MonoBehaviour
         if (isGrounded && jump)
         {
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+            //1. Animacion de salto (cuando empieza a saltar)
+            if (animator != null)
+            {
+                animator.SetTrigger("isJumping");
+            }
         } else
         {
             verticalVelocity = verticalVelocity > 0 && isCrouching ? 0 : verticalVelocity;
@@ -165,6 +213,15 @@ public class PlayerScript : MonoBehaviour
         if (!isGrounded || verticalVelocity > 0f)
         {
             verticalVelocity += gravity * Time.deltaTime * 3f;
+        }
+        // CONTROL DE ANIMACIÓN PARA EL AIRE Y EL ATERRIZAJE
+        if (animator != null)
+        {
+            // 2. MOMENTO: En el aire (si no está en el suelo y se está moviendo verticalmente)
+            animator.SetBool("isInAir", !isGrounded);
+
+            // 3. MOMENTO: Aterrizaje (enviar el estado del suelo directo al Animator)
+            animator.SetBool("isGrounded", isGrounded);
         }
     }
 
@@ -176,6 +233,12 @@ public class PlayerScript : MonoBehaviour
         {
             dashState = dashDuration;
             stats.dash();
+            
+            // --- NUEVA LÓGICA: Encendemos la animación del Dash ---
+            if (animator != null)
+            {
+                animator.SetBool("isDashing", true);
+            }
         } 
         
         if (IsDashState())
@@ -188,6 +251,12 @@ public class PlayerScript : MonoBehaviour
         {
             dashState = 0;
             pushPower = _pushPower;
+
+            // --- NUEVA LÓGICA: Apagamos la animación al terminar el Dash ---
+            if (animator != null)
+            {
+                animator.SetBool("isDashing", false);
+            }
         }
     }
 
@@ -201,8 +270,29 @@ public class PlayerScript : MonoBehaviour
             crouch = true;
         }
 
+        if (crouch != isCrouching)
+        {
         isCrouching = crouch;
+
         characterController.height = crouch ? originalColliderHeight * crouchScale : originalColliderHeight;
+
+            if (crouch)
+            {
+                // Al agacharse baja a -0.2f
+                characterController.center = new Vector3(characterController.center.x, -0.2f, characterController.center.z);
+            }
+            else
+            {
+                // Al levantarse regresa EXACTAMENTE a 0.2f
+                characterController.center = new Vector3(characterController.center.x, 0.2f, characterController.center.z);
+            }
+        }
+
+        // NUEVA LÓGICA DE ANIMACIÓN PARA AGACHARSE
+        if (animator != null)
+        {
+            animator.SetBool("isDown", isCrouching);
+        }
     }
 
     private bool CanStand()

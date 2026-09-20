@@ -2,10 +2,10 @@ using UnityEngine;
 
 public class ProjectileScript : MonoBehaviour
 {
-    [SerializeField] private float lifetime = 5f;
+    [SerializeField] private float lifetime = 1f;
     private GameObject owner;
-
     private Rigidbody body;
+    private float damage = 5;
 
     private void Awake()
     {
@@ -56,12 +56,17 @@ public class ProjectileScript : MonoBehaviour
         {
             shooterStats.projectilHit();
             Destroy(gameObject);
-            enemy.TakeDamage(1);
+            enemy.TakeDamage(damage);
         }
         else if (targetStats != null && shooterEnemy != null)
         {
-            targetStats.TakeDamage(1);
+            targetStats.TakeDamage(damage);
             Destroy(gameObject);
         }
+    }
+
+    public void SetDamage(float value)
+    {
+        damage = value;
     }
 }

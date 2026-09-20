@@ -6,6 +6,7 @@ public class EnemyScript : MonoBehaviour
     private float stateTimer;
     private float shotTimer;
     private Transform currentWaypoint;
+    private Quaternion targetFacingRotation;
     enum EnemyState
     {
         patrol,
@@ -14,6 +15,7 @@ public class EnemyScript : MonoBehaviour
     }
 
     private EnemyState state = EnemyState.patrol;
+    private Animator animator;
 
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip audioShot;
@@ -23,12 +25,14 @@ public class EnemyScript : MonoBehaviour
     public Transform wayPoint2;
     public Transform PlayerPosition;
     public float speed = 5f;
+    public float rotationSpeed = 360f;
     public float health = 10f;
     public float distanceToDetect = 8f;
     public MeshRenderer meshAlertSymbol;
     public GameObject projectilePrefab;
     public float projectileSpeed = 30f;
     public float projectileOffset = 0.5f;
+    public float projectileDamage = 10;
     public float timeIntervalShot = 1f;
     public float waypointWaitTime = 1f;
     public float detectionWaitTime = 1f;
@@ -38,6 +42,7 @@ public class EnemyScript : MonoBehaviour
     {
         currentWaypoint = wayPoint2;
         movementDirection = GetDirectionTo(currentWaypoint);
+        animator = GetComponentInChildren<Animator>();
         stateTimer = waypointWaitTime;
         UpdateFacingDirection();
         SetAlertSymbol(false);
@@ -48,10 +53,16 @@ public class EnemyScript : MonoBehaviour
     {
         if (wayPoint1 == null || wayPoint2 == null || PlayerPosition == null) return;
         bool playerInRange = IsPlayerInDetectionArea();
-
+        transform.rotation = Quaternion.RotateTowards(
+            transform.rotation,
+            targetFacingRotation,
+            rotationSpeed * Time.deltaTime
+        );
+        if (animator == null) return;
         switch (state)
         {
             case EnemyState.patrol:
+                animator.StopPlayback();
                 if (playerInRange)
                 {
                     ChangeState(EnemyState.detection);
@@ -63,6 +74,7 @@ public class EnemyScript : MonoBehaviour
                 break;
 
             case EnemyState.detection:
+                animator.StartPlayback();
                 stateTimer -= Time.deltaTime;
                 if (stateTimer <= 0f)
                 {
@@ -71,6 +83,7 @@ public class EnemyScript : MonoBehaviour
                 break;
 
             case EnemyState.attack:
+                //animator.SetBool("isWalking", false);
                 if (!playerInRange)
                 {
                     ChangeState(EnemyState.detection);
@@ -103,13 +116,14 @@ public class EnemyScript : MonoBehaviour
                 transform.position.y,
                 transform.position.z);
             stateTimer -= Time.deltaTime;
-
+            animator.SetBool("isWalking", false);
             if (stateTimer <= 0f)
             {
                 currentWaypoint = currentWaypoint == wayPoint1 ? wayPoint2 : wayPoint1;
                 movementDirection = GetDirectionTo(currentWaypoint);
                 stateTimer = waypointWaitTime;
                 UpdateFacingDirection();
+                animator.SetBool("isWalking", true);
             }
         }
     }
@@ -158,10 +172,7 @@ public class EnemyScript : MonoBehaviour
 
     private void Shoot()
     {
-        if (projectilePrefab == null)
-        {
-            return;
-        }
+        if (projectilePrefab == null) return;
 
         Vector3 direction = Vector3.right * movementDirection;
         Vector3 spawnPosition = transform.position + direction * projectileOffset;
@@ -171,6 +182,7 @@ public class EnemyScript : MonoBehaviour
         if (projectile != null)
         {
             projectile.Launch(direction, projectileSpeed, gameObject);
+            projectile.SetDamage(10f);
             if (audioSource != null && audioShot != null)
             {
                 audioSource.PlayOneShot(audioShot);
@@ -186,9 +198,11 @@ public class EnemyScript : MonoBehaviour
 
     private void UpdateFacingDirection()
     {
-        Vector3 scale = transform.localScale;
-        scale.x = Mathf.Abs(scale.x) * movementDirection;
-        transform.localScale = scale;
+        float targetY = movementDirection == 1 ? 0f : 180f;
+        targetFacingRotation = Quaternion.Euler(
+            transform.eulerAngles.x,
+            targetY,
+            transform.eulerAngles.z);
     }
 
     private void SetAlertSymbol(bool isVisible)
