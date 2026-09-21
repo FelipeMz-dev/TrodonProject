@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class FollowPlayerScript : MonoBehaviour
@@ -27,6 +28,11 @@ public class FollowPlayerScript : MonoBehaviour
         float distanceFactor = Mathf.Clamp01(distance / maxDistance);
         float speed = Mathf.Lerp(minSpeed, maxSpeed, distanceFactor);
 
-        transform.position = Vector3.MoveTowards(transform.position, playerTransform.position, speed * Time.deltaTime);
+        float targetX = MathF.Max(0, playerTransform.position.x);
+        float targetY = MathF.Max(0.6f, playerTransform.position.y);
+
+        Vector3 target = new Vector3(targetX, targetY, playerTransform.position.z);
+
+        transform.position = Vector3.MoveTowards(transform.position, target, speed * Time.deltaTime);
     }
 }

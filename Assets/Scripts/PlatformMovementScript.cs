@@ -3,14 +3,14 @@ using UnityEngine;
 public class PlatformMovementScript : MonoBehaviour
 {
     public float speed = 2f; // Speed of the platform movement
-    public Vector3 initialPosition;
-    public Vector3 targetPosition;
+    public Transform initialPosition;
+    public Transform targetPosition;
     private Vector3 currentPosition;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        currentPosition = initialPosition;
+        currentPosition = initialPosition.position;
         transform.position = currentPosition;
     }
 
@@ -25,11 +25,11 @@ public class PlatformMovementScript : MonoBehaviour
 
     public void moveToTarget()
     {
-        currentPosition = targetPosition;
+        currentPosition = targetPosition.position;
     }
 
     public void moveToInitial()
     {
-        currentPosition = initialPosition;
+        currentPosition = initialPosition.position;
     }
 }
