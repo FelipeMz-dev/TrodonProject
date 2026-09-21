@@ -6,10 +6,12 @@ public class PlayerScript : MonoBehaviour
     private ActionsController actionsController;
     private CharacterController characterController;
     private Animator animator;
+    private Vector3 lastPosition;
     private float verticalVelocity;
     private float fixedPlayerZ;
     private int lastDirection = 1;
     private float dashState = 0;
+    private float dashCooldownTimer = 0f;
     private float _pushPower;
     private float originalColliderHeight;
     private bool isCrouching;
@@ -24,6 +26,7 @@ public class PlayerScript : MonoBehaviour
     public float cameraOffsetY = 4f;
     public float dashSpeed = 30;
     public float dashDuration = 0.5f;
+    public float dashCooldown = 1f;
     public float crouchScale = 0.5f;
     public float crouchSpeedMultiplier = 0.5f;
     
@@ -67,6 +70,7 @@ public class PlayerScript : MonoBehaviour
     void Start()
     {
         fixedPlayerZ = transform.position.z;
+        lastPosition = transform.position;
         _pushPower = pushPower;
         originalColliderHeight = characterController.height;
         animator = GetComponentInChildren<Animator>();
@@ -228,8 +232,9 @@ public class PlayerScript : MonoBehaviour
     private void HandleDash()
     {
         bool dash = actionsController.Player.dash.WasPressedThisFrame();
+        dashCooldownTimer = Mathf.Max(0f, dashCooldownTimer - Time.deltaTime);
 
-        if (dash && dashState == 0)
+        if (dash && dashState == 0 && dashCooldownTimer <= 0f)
         {
             dashState = dashDuration;
             stats.dash();
@@ -245,11 +250,12 @@ public class PlayerScript : MonoBehaviour
         {
             Vector3 movement = Vector3.right * lastDirection * dashSpeed;
             characterController.Move(movement * Time.deltaTime);
-            pushPower = _pushPower * 9;
+            pushPower = _pushPower * 2;
             dashState -= Time.deltaTime;
         } else if (dashState < 0)
         {
             dashState = 0;
+            dashCooldownTimer = dashCooldown;
             pushPower = _pushPower;
 
             // --- NUEVA LÓGICA: Apagamos la animación al terminar el Dash ---
@@ -352,5 +358,27 @@ public class PlayerScript : MonoBehaviour
     public bool IsPlayerPlayState()
     {
         return IsPlayState;
+    }
+
+    public void AddLastCheckpoint(Vector3 position)
+    {
+        lastPosition = position;
+    }
+
+    public void MoveToLastCheckpoint()
+    {
+        bool wasControllerEnabled = characterController != null && characterController.enabled;
+        if (wasControllerEnabled)
+        {
+            characterController.enabled = false;
+        }
+
+        transform.position = lastPosition;
+        verticalVelocity = 0f;
+
+        if (wasControllerEnabled)
+        {
+            characterController.enabled = true;
+        }
     }
 }

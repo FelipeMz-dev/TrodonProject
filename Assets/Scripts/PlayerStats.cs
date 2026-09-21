@@ -27,9 +27,12 @@ public class PlayerStats : MonoBehaviour
         currentHealth = Mathf.Max(0, currentHealth - amount);
         hudManager.UpdateHealth(currentHealth, maxHealth);
         if (currentHealth <= 0) {
-            hudManager.GameOver();
-            Destroy(gameObject);
+            int lives = hudManager.less1Live();
+            player.MoveToLastCheckpoint();
+            currentHealth = 100;
+            if (lives < 0) Destroy(gameObject);
         }
+        hudManager.UpdateHealth(currentHealth, maxHealth);
     }
 
     public void AddScore(int amount)
