@@ -58,6 +58,7 @@ public class EnemyScript : MonoBehaviour
             targetFacingRotation,
             rotationSpeed * Time.deltaTime
         );
+        if (transform.position.y < 0) TakeDamage(100f);
         if (animator == null) return;
         switch (state)
         {
